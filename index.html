@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style type="text/css">
+            * {
+                font-family: Verdana, Geneva, Tahoma, sans-serif;
+            }
+            main {
+                display: flex;
+            }
+            aside {
+                width: 20%;
+                padding-left: 20px;
+            }
+            img {
+                display: inline-block;
+                margin-right: 10px;
+                border-radius: 5px;
+            }
+            .buttons {
+                margin-right: 5px;
+                display: flex;
+                flex-direction: column;
+            }
+            .btn-class {
+                padding: 24px;
+                margin: 2px;
+            }
+            .flex-row {
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+            }
+            .pics-first-row {
+                margin-bottom: 6px;
+            }
+            aside h2 {
+                color: rgb(0, 100, 200);
+                font-weight: bold;
+                margin-top: 0px;
+            }
+            p {
+                line-height: 1.5em;
+            }
+        </style>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script>
+            $pics = [];
+            for (let i = 1; i < 10; i++) {
+                $pics.push(`slider-image-${i}.jpg`);
+            }
+            $arrowLeft = "Assets\\arrow-blue-left.png";
+            $arrowRight = "Assets\\arrow-blue-right.png";
+            $arrowGrayLeft = "Assets\\arrow-gray-left.png";
+            $arrowGrayRight = "Assets\\arrow-gray-right.png";
+
+            $btnDisabled = false;
+
+            $leftIn = false;
+            $rightIn = false;
+
+            $currentPosFirstRow = 0;
+            $currentPosSecRow = 0;
+            $currentPicFirstRow = 0;
+            $currentPicSecRow = 0;
+
+            $firstRowElemNmb = 0;
+            $secondRowElemNmb = 0;
+
+            $firstRowElements = [];
+            $secondRowElements = [];
+            $firstRowInitialPos = [];
+            $secondRowInitialPos = [];
+
+            $setInitials = false;
+            $totalWidthFirstRow = 0;
+            $totalWidthSecondRow = 0;
+            
+            let onBtnCss =  {
+                border: "1px solid green",
+                boxShadow: "1px 1px 1px #777",
+                transition: "border 0.3s, box-shadow 0.3s"
+            };
+
+            let offBtnCss =  {
+                border: "1px solid rgba(0, 50, 200, 0.6)",
+                boxShadow: "1px 1px 1px #FFF",
+                transition: "border 0.3s, box-shadow 0.3s"
+            };
+
+            $(document).ready(function() {
+                $("h2").css({
+                    color: "rgb(0, 100, 200)",
+                });
+
+                $.each($pics, function(index, value) {
+                    if (index < 4) {
+                    $(".pics-second-row").append("<img src='Assets\\" + value + "'/>");
+                    $secondRowElemNmb++;
+                    } else {
+                        $(".pics-first-row").append("<img src='Assets\\" + value + "'/>");
+                        $firstRowElemNmb++;
+                    }
+                });
+
+                $(".pics-first-row").css({
+                    position: "relative",
+                    left: 0
+                }).children().addClass("pic pic-f");
+
+                $(".pics-second-row").css({
+                    position: "relative",
+                    left: 0
+                }).children().addClass("pic pic-s");
+
+                $(".second-row").addClass("flex-row");
+                $(".pic").css("height", "200px");
+                
+                $("#left")
+                    .attr("src", $arrowLeft)
+                    .addClass("btn-class")
+                    .css({border: "1px solid rgba(0, 50, 200, 0.6)", borderRadius: 3});
+                $("#right")
+                    .attr("src", $arrowRight)
+                    .addClass("btn-class")
+                    .css({border: "1px solid rgba(0, 50, 200, 0.6)", borderRadius: 3});
+
+                $.each ($(".pics-first-row").children(), function(index, value) {
+                    $(this).addClass("nmb-" + (index + 4)).css("position", "relative");
+                    $firstRowElements.push($(this));
+                });
+
+                $.each ($(".pics-second-row").children(), function(index, value) {
+                    $(this).addClass("nmb-" + index).css("position", "relative");
+                    $secondRowElements.push($(this));
+                })
+
+                $("#left").hover(() => {
+                    $leftIn = true;
+                    if ($btnDisabled) return;
+                    $("#left").css(onBtnCss);
+                }, () => {
+                    $leftIn = false;
+                    if ($btnDisabled) return;
+                    $("#left").css(offBtnCss);
+                });
+
+                $("#right").hover(() => {
+                    $rightIn = true;
+                    if ($btnDisabled) return;
+                    $("#right").css(onBtnCss);
+                }, () => {
+                    $rightIn = false;
+                    if ($btnDisabled) return;
+                    $("#right").css(offBtnCss);
+                });
+
+
+                $("#left").click(() => {
+                    if ($btnDisabled) {
+                        console.log("buttons disabled!");
+                        return;
+                    }
+
+                    disableButtons();
+
+                    shiftElements(
+                        $(".nmb-" + ($currentPicFirstRow + $firstRowElemNmb - 1)).outerWidth(true), 
+                        $(".nmb-" + $currentPicSecRow).outerWidth(true), 
+                        -1
+                    );
+                    
+                    $currentPicFirstRow = ($currentPicFirstRow + 1) % $firstRowElemNmb;
+                    $currentPicSecRow = ($currentPicSecRow + 1) % $secondRowElemNmb;
+                })
+
+                $("#right").click(() => {
+                    if ($btnDisabled) {
+                        console.log("buttons disabled!");
+                        return;
+                    }
+
+                    disableButtons();
+
+                    $nextPicFirstRow = ($currentPicFirstRow + $firstRowElemNmb - 1) % $firstRowElemNmb;
+                    $nextPicSecRow = ($currentPicSecRow + $secondRowElemNmb - 1) % $secondRowElemNmb;
+                    
+                    shiftElements(
+                        $(".nmb-" + ($nextPicFirstRow + $firstRowElemNmb - 1)).outerWidth(true), 
+                        $(".nmb-" + $nextPicSecRow).outerWidth(true), 
+                        1
+                    );
+
+                    $currentPicFirstRow = $nextPicFirstRow;
+                    $currentPicSecRow = $nextPicSecRow;
+                })
+            })
+
+            function disableButtons() {
+                $btnDisabled = true;
+
+                $("#left").attr("src", $arrowGrayLeft).css(offBtnCss);
+                $("#right").attr("src", $arrowGrayRight).css(offBtnCss);
+            }
+
+            function shiftElements(pxValFirst, pxValSec, dir) {
+                
+                if (!$setInitials) {
+                    $.each ($firstRowElements, function(index, value) {
+                        $firstRowInitialPos.push(value.position().left);
+                        $totalWidthFirstRow += value.outerWidth(true);
+                    });
+                    $.each ($secondRowElements, function(index, value) {
+                        $secondRowInitialPos.push(value.position().left);
+                        $totalWidthSecondRow += value.outerWidth(true);
+                    });
+
+                    $setInitials = true;
+                }
+
+
+                // Move first row elements
+
+                moveElements(
+                    $firstRowElements, 
+                    $currentPicFirstRow, 
+                    dir, 
+                    pxValFirst,
+                    $totalWidthFirstRow,
+                    $firstRowElemNmb,
+                    $firstRowInitialPos,
+                    "first"
+                );
+
+                // Move second row elements
+
+                moveElements(
+                    $secondRowElements, 
+                    $currentPicSecRow, 
+                    dir, 
+                    pxValSec,
+                    $totalWidthSecondRow,
+                    $secondRowElemNmb,
+                    $secondRowInitialPos,
+                    "second"
+                );
+            }
+
+            function moveElements($elements, curr, dir, pxVal, width, elemNmb, $initialPos, row) {
+                let tmpMove = $elements[curr].outerWidth(true);
+                $.each($elements, function(index, value) {
+                    let move = value.position().left + dir * pxVal;
+                    if (dir == 1) {
+                        if (move >= width) move -= width;
+                    } else {
+                        if (move < 0) move = width - tmpMove;
+                    }
+                    let evalLeft = curr;
+                    let evalRight = (curr + elemNmb - 1) % elemNmb;
+
+                    if (index == (dir == 1 ? evalRight : evalLeft)) {
+                        value.animate({opacity: 0});
+                        value.animate({
+                            left: (move - $initialPos[index])
+                        }, "fast");
+                        value.animate({opacity: 1}, "fast", () => {
+                            if (row == "first") setButtons();
+                        });
+                    } else {
+                        value.animate({
+                            left: (move - $initialPos[index])
+                        });
+                    }
+                });
+            }
+
+            function setButtons() {
+                
+                $btnDisabled = false;            
+                $("#left").attr("src", $arrowLeft);
+                $("#right").attr("src", $arrowRight);
+
+                if ($leftIn) {
+                    $("#left").css(onBtnCss);
+                    $("#right").css(offBtnCss);
+                } else if ($rightIn) {
+                    $("#left").css(offBtnCss);
+                    $("#right").css(onBtnCss);
+                } else {
+                    $("#left, #right").css(offBtnCss);
+                }
+            }
+        </script>
+    </head>
+
+    <body>
+        <h2>Slider assignment</h2>
+        <main>
+            <section>
+                <div class="pics-first-row"></div>
+                <div class="second-row">
+                    <div class="pics-second-row"></div>
+                    <div class="buttons">
+                        <img id="left" />
+                        <img id="right" />
+                    </div>
+                </div>
+            </section>
+            <aside>
+                <h2>Lorem ipsum dolor sit amet consectetur adipiscing elit</h2>
+                <p>Aliquam auctor posuere diam sit amet vehicula. Pellentesque habitant morbi 
+                    tristique senectus et netus et malesuada fames ac turpis egestas. Cras 
+                    porta tellus sem, auctor convallis felis feugiat ac.
+                </p>
+            </aside>
+        </main>
+    </body>
+</html>
